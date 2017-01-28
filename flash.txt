@@ -1,0 +1,4 @@
+r
+loadfile test_rtos.hex
+r
+q
