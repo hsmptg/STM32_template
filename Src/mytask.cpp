@@ -15,20 +15,24 @@ void StartPrintTask(void const * argument)
 	int n = 0;
 	MyClass xxx;
 
-	osDelay(2000);
+//	osDelay(2000);
+//	while (!g_VCPInitialized) {}
 
 /*
+	int val = 0;
+	printf("Enter a number: ");
+	scanf("%d", &val);
+	printf("%d = 0x%x\r\n", val, val);
+*/
 	char name[20];
 	printf("What's your name?\r\n");
 	scanf("%s", name);
 	printf("Hello %s!\r\n", name);
- */
 
   for(;;)
   {
     HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
   	printf("%d\r\n", n);
-//  	CDC_Transmit_FS(str, 14);
   	n = xxx.incby(n, 2);
     osDelay(1000);
   }

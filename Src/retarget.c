@@ -1,5 +1,56 @@
 #include "retarget.h"
 
+#define USB_RETARGET
+
+#if !defined(OS_USE_SEMIHOSTING)
+
+#if defined(USB_RETARGET)
+
+#include<sys/stat.h>
+#include "vcp.h"
+
+int _fstat (int fd, struct stat *pStat)
+{
+		pStat->st_mode = S_IFCHR;
+	 return 0;
+}
+
+int _close(int fd)
+{
+	 return -1;
+}
+
+int _write (int fd, char *pBuffer, int size)
+{
+	 return VCP_write(pBuffer, size);
+}
+
+int _isatty (int fd)
+{
+	 return 1;
+}
+
+int _lseek(int fd, int ptr, int dir)
+{
+	 return -1;
+}
+
+int _read (int fd, char *pBuffer, int size)
+{
+	uint32_t len = size;
+
+	for (;;) {
+		int done = (int) VCP_read((uint8_t*) pBuffer, &len);
+		if (done)
+			return done;
+	}
+	return 1;
+}
+
+#endif //
+
+#if defined(USART_RETARGET)
+
 #include <_ansi.h>
 #include <_syslist.h>
 #include <errno.h>
@@ -8,9 +59,6 @@
 #include <limits.h>
 #include <signal.h>
 #include <stdint.h>
-
-//#if !defined(OS_USE_SEMIHOSTING)
-#if defined(OS_USE_SEMIHOSTING)
 
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
@@ -91,5 +139,7 @@ int _fstat(int fd, struct stat* st) {
   errno = EBADF;
   return 0;
 }
+
+#endif //#if defined(USART_RETARGET)
 
 #endif //#if !defined(OS_USE_SEMIHOSTING)

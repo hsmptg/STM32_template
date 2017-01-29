@@ -115,8 +115,14 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-  	HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-    osDelay(100);
+    	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+      osDelay(100);
+    	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
+      osDelay(100);
+    	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+      osDelay(100);
+    	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
+      osDelay(700);
   }
   /* USER CODE END StartDefaultTask */
 }

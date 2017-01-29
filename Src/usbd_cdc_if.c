@@ -44,7 +44,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
 /* USER CODE BEGIN INCLUDE */
-#include <sys/stat.h>
+//#include <sys/stat.h>
+#include "vcp.h"
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -71,8 +72,8 @@
 /* USER CODE BEGIN PRIVATE_DEFINES */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
-#define APP_RX_DATA_SIZE  64
-#define APP_TX_DATA_SIZE  64
+#define APP_RX_DATA_SIZE  16
+#define APP_TX_DATA_SIZE  16
 /* USER CODE END PRIVATE_DEFINES */
 /**
   * @}
@@ -262,8 +263,40 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+
+	if (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED) {
+		return USBD_FAIL;
+	}
+
+	if (((Buf == NULL) || (Len == NULL)) || (*Len <= 0)) {
+		return USBD_FAIL;
+	}
+
+	/* Get data */
+	uint8_t result = USBD_OK;
+
+	do {
+		 result = USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+	} while(result != USBD_OK);
+
+    do
+    {
+       result = USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+    }
+    while(result != USBD_OK);
+
+    /* Stops FIFO overflow*/
+	if(RX_FIFO.FIFO_POS>=FIFO_SIZE)
+	{
+		return (USBD_OK);
+	}
+
+	/* Save date into FIFO */
+	RX_FIFO.FIFO_DATA_LEN[RX_FIFO.FIFO_POS]=*Len;
+    copy_array(RX_FIFO.FIFO_DATA[RX_FIFO.FIFO_POS],&Buf[0],*Len);
+
+    RX_FIFO.FIFO_POS++; //move to next position to receive data
+
   return (USBD_OK);
   /* USER CODE END 6 */ 
 }
@@ -281,9 +314,13 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 {
+	if (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED)
+	{
+		return USBD_FAIL;
+	}
+
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */ 
-  memcpy(UserTxBufferFS,Buf,sizeof(char)*Len);
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
   if (hcdc->TxState != 0){
     return USBD_BUSY;
@@ -295,6 +332,7 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
+/*
 int8_t myCDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 {
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
@@ -337,6 +375,7 @@ int _read (int fd, char *pBuffer, int size)
 			return done;
 	}
 }
+ */
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
 /**
