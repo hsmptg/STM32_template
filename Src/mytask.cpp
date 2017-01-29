@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
 #include "myclass.h"
+//#include "usbd_cdc_if.h"
 
 /*
  * To use classes the source must be of .cpp type
@@ -14,10 +15,20 @@ void StartPrintTask(void const * argument)
 	int n = 0;
 	MyClass xxx;
 
+	osDelay(2000);
+
+/*
+	char name[20];
+	printf("What's your name?\r\n");
+	scanf("%s", name);
+	printf("Hello %s!\r\n", name);
+ */
+
   for(;;)
   {
     HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
   	printf("%d\r\n", n);
+//  	CDC_Transmit_FS(str, 14);
   	n = xxx.incby(n, 2);
     osDelay(1000);
   }
